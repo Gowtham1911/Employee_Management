@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [importing, setImporting] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -57,8 +58,7 @@ export default function AdminPage() {
     setDeleting(null);
   }
 
-  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  async function processFile(file: File) {
     if (!file) return;
     setImporting(true);
     const formData = new FormData();
@@ -70,6 +70,19 @@ export default function AdminPage() {
     alert(`Import complete!\nSuccess: ${data.success}\nFailed: ${data.failed}${data.errors?.length ? "\n\nErrors:\n" + data.errors.join("\n") : ""}`);
     const empRes = await fetch("/api/employees");
     if (empRes.ok) { const d = await empRes.json(); setEmployees(d); setFiltered(d); }
+  }
+
+  function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.name.endsWith(".xlsx") || file.name.endsWith(".xls"))) processFile(file);
+    else alert("Please drop an Excel file (.xlsx or .xls)");
   }
 
   function downloadTemplate() {
@@ -109,19 +122,38 @@ export default function AdminPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Template
             </button>
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={importing}
-              className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition disabled:opacity-60"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-              {importing ? "Importing..." : "Import Excel"}
-            </button>
             <Link href="/admin/add" className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               Add Employee
             </Link>
           </div>
+        </div>
+
+        {/* Drag & Drop Import */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          onClick={() => fileRef.current?.click()}
+          className={`mb-6 border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition ${
+            dragOver ? "border-green-500 bg-green-50" : "border-gray-300 bg-white hover:border-green-400 hover:bg-green-50"
+          }`}
+        >
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+          {importing ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
+              <p className="text-sm text-green-600 font-medium">Importing employees...</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <svg className={`w-10 h-10 ${dragOver ? "text-green-500" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              <p className="text-sm font-medium text-gray-700">{dragOver ? "Drop your Excel file here" : "Drag & drop Excel file here, or click to browse"}</p>
+              <p className="text-xs text-gray-400">.xlsx or .xls · Default password for imported employees: <span className="font-mono">Welcome@123</span></p>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
