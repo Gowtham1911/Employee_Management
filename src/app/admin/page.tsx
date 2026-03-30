@@ -61,15 +61,24 @@ export default function AdminPage() {
   async function processFile(file: File) {
     if (!file) return;
     setImporting(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/employees/bulk", { method: "POST", body: formData });
-    const data = await res.json();
-    setImporting(false);
-    if (fileRef.current) fileRef.current.value = "";
-    alert(`Import complete!\nSuccess: ${data.success}\nFailed: ${data.failed}${data.errors?.length ? "\n\nErrors:\n" + data.errors.join("\n") : ""}`);
-    const empRes = await fetch("/api/employees");
-    if (empRes.ok) { const d = await empRes.json(); setEmployees(d); setFiltered(d); }
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/employees/bulk", { method: "POST", body: formData });
+      const data = await res.json();
+      if (fileRef.current) fileRef.current.value = "";
+      if (!res.ok) {
+        alert(`Import failed: ${data.message || "Unknown error"}`);
+      } else {
+        alert(`Import complete!\nSuccess: ${data.success}\nFailed: ${data.failed}${data.errors?.length ? "\n\nErrors:\n" + data.errors.join("\n") : ""}`);
+        const empRes = await fetch("/api/employees");
+        if (empRes.ok) { const d = await empRes.json(); setEmployees(d); setFiltered(d); }
+      }
+    } catch (err: any) {
+      alert(`Import error: ${err.message}`);
+    } finally {
+      setImporting(false);
+    }
   }
 
   function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
