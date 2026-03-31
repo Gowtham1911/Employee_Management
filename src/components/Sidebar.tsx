@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { apiFetch, clearToken } from "@/lib/api";
 
 interface SidebarProps {
   role: "admin" | "employee";
@@ -11,7 +12,8 @@ export default function Sidebar({ role, userName }: SidebarProps) {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await apiFetch("/api/auth/logout", { method: "POST" });
+    clearToken();
     router.push("/login");
   }
 
@@ -25,12 +27,10 @@ export default function Sidebar({ role, userName }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-1">
         {role === "admin" ? (
           <>
-            <Link href="/admin" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition text-sm">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" /></svg>
-              All Employees
+            <Link href="/admin?tab=overview" className="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition text-sm">
+              Overview
             </Link>
-            <Link href="/admin/add" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition text-sm">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            <Link href="/admin?tab=add" className="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition text-sm">
               Add Employee
             </Link>
           </>

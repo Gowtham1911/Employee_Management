@@ -4,7 +4,8 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import EmployeeForm, { EmployeeFormData } from "@/components/EmployeeForm";
-import { IEmployee } from "@/models/Employee";
+import { IEmployee } from "@/types/employee";
+import { apiFetch } from "@/lib/api";
 
 interface Me { id: number; email: string; role: "admin" | "employee" }
 
@@ -17,12 +18,12 @@ export default function EditEmployeePage() {
 
   useEffect(() => {
     async function load() {
-      const meRes = await fetch("/api/auth/me");
+      const meRes = await apiFetch("/api/auth/me");
       if (!meRes.ok) return router.push("/login");
       const meData: Me = await meRes.json();
       if (meData.role !== "admin") return router.push("/dashboard");
       setMe(meData);
-      const empRes = await fetch(`/api/employees/${id}`);
+      const empRes = await apiFetch(`/api/employees/${id}`);
       if (!empRes.ok) return router.push("/admin");
       setEmployee(await empRes.json());
     }
@@ -30,9 +31,8 @@ export default function EditEmployeePage() {
   }, [router, id]);
 
   async function handleSubmit(data: EmployeeFormData) {
-    const res = await fetch(`/api/employees/${id}`, {
+    const res = await apiFetch(`/api/employees/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     if (!res.ok) {

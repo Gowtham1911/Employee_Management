@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
-import { IEmployee } from "@/models/Employee";
+import { IEmployee } from "@/types/employee";
+import { apiFetch } from "@/lib/api";
 
 interface Me { id: number; email: string; role: "admin" | "employee" }
 
@@ -24,12 +25,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const meRes = await fetch("/api/auth/me");
+      const meRes = await apiFetch("/api/auth/me");
       if (!meRes.ok) return router.push("/login");
       const meData: Me = await meRes.json();
       if (meData.role === "admin") return router.push("/admin");
       setMe(meData);
-      const empRes = await fetch("/api/employees");
+      const empRes = await apiFetch("/api/employees");
       if (empRes.ok) {
         const empData = await empRes.json();
         setEmployee(Object.keys(empData).length ? empData : null);

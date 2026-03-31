@@ -2,6 +2,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { apiFetch, saveToken } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,14 +15,14 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await fetch("/api/auth/password/login", {
+    const res = await apiFetch("/api/auth/password/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
     setLoading(false);
     if (!res.ok) return setError(data.message);
+    saveToken(data.token);
     router.push(data.role === "admin" ? "/admin" : "/dashboard");
   }
 

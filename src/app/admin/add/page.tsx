@@ -4,6 +4,7 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import EmployeeForm, { EmployeeFormData } from "@/components/EmployeeForm";
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
 
 interface Me { id: number; email: string; role: "admin" | "employee" }
 
@@ -12,7 +13,7 @@ export default function AddEmployeePage() {
   const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me").then((r) => {
+    apiFetch("/api/auth/me").then((r) => {
       if (!r.ok) return router.push("/login");
       r.json().then((d: Me) => {
         if (d.role !== "admin") return router.push("/dashboard");
@@ -22,9 +23,8 @@ export default function AddEmployeePage() {
   }, [router]);
 
   async function handleSubmit(data: EmployeeFormData) {
-    const res = await fetch("/api/employees", {
+    const res = await apiFetch("/api/employees", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     if (!res.ok) {
